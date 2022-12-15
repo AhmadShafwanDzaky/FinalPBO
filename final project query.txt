@@ -1,0 +1,202 @@
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Number 2:
+SELECT * 
+FROM pembelian 
+LEFT JOIN item_pesanan on pembelian.id_order = item_pesanan.id_order 
+WHERE status = "delivered";
+
+
+SELECT *
+FROM pembelian p
+LEFT JOIN item_pesanan i on p.id_order = item_i.id_order 
+WHERE status in ('delivered');
+
+// fix
+SELECT p.id_order as orderID, p.id_pasien as pasienID, p.id_apoteker as apotekerID, i.id_reservasi as KodeReservasi, i.id_obat as obatID, p.status as statusID, i.jumlah as jumlahObat, i.total_pembayaran as totalPembayaran, p.waktu_pembelian as waktuPembelian
+FROM pembelian p
+LEFT JOIN item_pesanan i on p.id_order = i.id_order 
+WHERE status in ('delivered');
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Number 3:
+SELECT * 
+FROM pembelian 
+LEFT JOIN item_pesanan on pembelian.id_order = item_pesanan.id_order 
+WHERE status = "cart";
+
+
+SELECT * 
+FROM pembelian 
+LEFT JOIN item_pesanan on pembelian.id_order = item_pesanan.id_order 
+WHERE status in ('cart');
+
+// fix
+SELECT p.id_order as orderID, p.id_pasien as pasienID, p.id_apoteker as apotekerID, i.id_reservasi as reservasiD, i.id_obat as obatID, p.status as status, i.jumlah as jumlahObat, i.total_pembayaran as totalPembayaran, p.waktu_pembelian as waktuPembelian 
+FROM pembelian p
+LEFT JOIN item_pesanan i on p.id_order = i.id_order 
+WHERE status in ('cart');
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Number 4:
+-= Laki-laki dewasa =-
+SELECT * 
+FROM pasien 
+WHERE jenis_kelamin = 'L' and ttl < '2010-12-13';
+
+-= Laki-laki anak-anak =-
+SELECT * 
+FROM pasien 
+WHERE jenis_kelamin = 'L' and ttl > '2010-12-13';
+
+-= Perempuan dewasa =-
+SELECT * 
+FROM pasien 
+WHERE jenis_kelamin = 'P' and ttl < '2010-12-13';
+
+-= Perempuan anak-anak =-
+SELECT * 
+FROM pasien 
+WHERE jenis_kelamin = 'P' and ttl > '2010-12-13';
+
+-= all gender =-
+SELECT T1.jenis_kelamin, COUNT(T2.cnt) AS total
+FROM (
+    SELECT 'Laki Dewasa' AS jenis_kelamin FROM pasien WHERE jenis_kelamin = 'L' and ttl < '2010-12-13'
+    UNION ALL
+    SELECT 'Laki bocil' FROM pasien WHERE jenis_kelamin = 'L' and ttl > '2010-12-13'
+    UNION ALL
+    SELECT 'Perempuan Dewasa' FROM pasien WHERE jenis_kelamin = 'P' and ttl < '2010-12-13'
+    UNION ALL
+    SELECT 'Perempuan bocil' FROM pasien WHERE jenis_kelamin = 'P' and ttl > '2010-12-13'
+) T1
+LEFT JOIN
+(
+    SELECT COUNT(DISTINCT id_pasien) AS cnt
+    FROM pasien
+) T2
+ON T2.cnt
+GROUP BY T1.jenis_kelamin;
+
+======================================================================
+
+SELECT T1.jenis_kelamin, COUNT(T2.cnt) AS total
+FROM (
+    SELECT 'Laki Dewasa' AS jenis_kelamin FROM pasien WHERE jenis_kelamin = 'L' and timestampdiff(YEAR,ttl,curdate()) > 12;
+    UNION ALL
+    SELECT 'Laki bocil' AS jenis_kelamin FROM pasien WHERE jenis_kelamin = 'L' and timestampdiff(YEAR,ttl,curdate()) <= 12;
+    UNION ALL
+    SELECT 'Perempuan Dewasa' AS jenis_kelamin FROM pasien WHERE jenis_kelamin = 'P' and timestampdiff(YEAR,ttl,curdate()) > 12;
+    UNION ALL
+    SELECT 'Perempuan bocil' AS jenis_kelamin FROM pasien WHERE jenis_kelamin = 'P' and timestampdiff(YEAR,ttl,curdate()) <= 12;
+) T1
+LEFT JOIN
+(
+    SELECT COUNT(DISTINCT id_pasien) AS cnt
+    FROM pasien
+) T2
+ON T2.cnt
+GROUP BY T1.jenis_kelamin;
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Number 5:
+-= all delivered =-
+SELECT o.id_obat, o.nama_obat, p.status, SUM(DISTINCT i.jumlah) Jumlah_terjual 
+FROM obat o 
+INNER JOIN item_pesanan i ON o.id_obat = i.id_obat 
+INNER JOIN pembelian p ON i.id_order = p.id_order 
+WHERE p.status = 'delivered'
+GROUP BY o.id_obat, o.nama_obat 
+ORDER BY Jumlah_Terjual DESC LIMIT 10;
+
+-= without status :( =-
+SELECT o.id_obat, o.nama_obat SUM(DISTINCT i.jumlah) Jumlah_terjual 
+FROM obat o 
+INNER JOIN item_pesanan i ON o.id_obat = i.id_obat 
+INNER JOIN pembelian p ON i.id_order = p.id_order 
+WHERE p.status = 'delivered' 
+GROUP BY o.id_obat, o.nama_obat 
+ORDER BY Jumlah_Terjual DESC LIMIT 10;
+
+after 1 week:
+-= just show top 3 =-
+SELECT o.id_obat, o.nama_obat, p.status, SUM(DISTINCT i.jumlah) Jumlah_terjual 
+FROM obat o 
+INNER JOIN item_pesanan i ON o.id_obat = i.id_obat 
+INNER JOIN pembelian p ON i.id_order = p.id_order 
+WHERE p.status = 'delivered' and p.waktu_pembelian > '2022-12-06 23:59:59'
+GROUP BY o.id_obat, o.nama_obat 
+ORDER BY Jumlah_Terjual DESC LIMIT 3;
+
+-= show all item =-
+SELECT o.id_obat, o.nama_obat, p.status, SUM(i.jumlah) Jumlah_terjual 
+FROM obat o 
+INNER JOIN item_pesanan i ON o.id_obat = i.id_obat 
+INNER JOIN pembelian p ON i.id_order = p.id_order 
+WHERE p.status = 'delivered' and timestampdiff(week,p.waktu_pembelian,now()) < 1
+GROUP BY o.id_obat, o.nama_obat
+ORDER BY Jumlah_Terjual DESC LIMIT 1;
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+Testing:
+select * from pembelian LEFT JOIN item_pesanan on pembelian.id_order = item_pesanan.id_order;
+
+select * from pembelian LEFT JOIN item_pesanan on pembelian.id_order = item_pesanan.id_order where exists select status from pembelian where status = "delivered";
+
+SELECT TOP 10 jumlah, COUNT(*) AS OrderCount
+FROM item_pesanan
+GROUP BY jumlah
+ORDER BY OrderCount DESC, jumlah;
+
+SELECT TOP 10 jumlah, COUNT(*) AS OrderCount FROM item_pesanan GROUP BY jumlah ORDER BY OrderCount DESC, jumlah;
+
+SELECT jumlah, COUNT(*) AS OrderCount FROM item_pesanan GROUP BY jumlah ORDER BY OrderCount DESC, jumlah limit 10;
+
+SELECT id_order, COUNT(*) AS OrderCount FROM item_pesanan GROUP BY id_order ORDER BY OrderCount DESC, id_order limit 10;
+
+SELECT id_order, COUNT(jumlah) AS OrderCount FROM item_pesanan GROUP BY id_order ORDER BY OrderCount DESC, id_order limit 10;
+
+SELECT p.id_obat, p.nama_obat, COUNT(DISTINCT d.jumlah) NoOfProducts 
+FROM obat p 
+INNER JOIN item_pesanan d ON p.id_obat = d.id_obat 
+INNER JOIN pembelian o ON d.id_order = o.id_order 
+WHERE o.status = 'delivered'
+GROUP BY p.id_obat, p.nama_obat
+ORDER BY NoOfProducts DESC
+LIMIT 4
+
+SELECT p.id_obat, p.nama_obat, COUNT(d.jumlah) NoOfProducts 
+FROM obat p 
+INNER JOIN item_pesanan d ON p.id_obat = d.id_obat 
+INNER JOIN pembelian o ON d.id_order = o.id_order 
+WHERE o.status = 'delivered'
+GROUP BY p.id_obat, p.nama_obat
+ORDER BY NoOfProducts DESC
+LIMIT 4
+
+SELECT p.ProductID, p.ProductName, COUNT(DISTINCT d.ODID) NoOfProducts 
+FROM Products p 
+INNER JOIN OrderDetails d ON p.ProductID = d.ODProductID 
+INNER JOIN Orders o ON d.ODOrderID = o.OrderID 
+WHERE o.OrderStatusID = '5'
+GROUP BY p.ProductID, p.ProductName
+ORDER BY NoOfProducts DESC
+LIMIT 4
+
+SELECT p.id_obat, p.nama_obat, o.status, SUM(DISTINCT d.jumlah) Jumlah_terjual FROM obat p INNER JOIN item_pesanan d ON p.id_obat = d.id_obat INNER JOIN pembelian o ON d.id_order = o.id_order WHERE o.status = 'delivered' and o.waktu_pembelian > '2022-12-06 23:59:59' GROUP BY p.id_obat, p.nama_obat ORDER BY Jumlah_Terjual DESC LIMIT 10;
+
+
+
+SELECT p.id_obat, p.nama_obat, o.status, SUM(DISTINCT d.jumlah) Jumlah_terjual FROM obat p INNER JOIN item_pesanan d ON p.id_obat = d.id_obat INNER JOIN pembelian o ON d.id_order = o.id_order WHERE o.status = 'delivered' and o.waktu_pembelian > '2022-12-06 23:59:59' GROUP BY p.id_obat, p.nama_obat ORDER BY Jumlah_Terjual DESC;
+
+SELECT COUNT(id_pasien) as JumlahPasien FROM pasien WHERE jenis_kelamin = 'P' and ttl < '2010-12-13';
+
+SELECT COUNT(id_pasien) as JumlahPasien FROM pasien WHERE jenis_kelamin = 'P' and ttl < '2010-12-13';
+
+SELECT COUINT (IF(pasien.jenis_kelamin = 'P' and pasien.ttl < '2010-12-13')) as Jumlah FROM PASIEN;
+
+SELECT COUINT(IF(pasien.jenis_kelamin = 'P') as Jumlah FROM db_klinik.pembelian join pasien on pembelian.id_pasien = pasien.id_pasien;
+
+
+SELECT COUNT(*) as JumlahPasien FROM pasien WHERE jenis_kelamin = 'P' and ttl < '2010-12-13' left join SELECT COUNT(*) as JumlahPasien FROM pasien WHERE jenis_kelamin = 'L' and ttl < '2010-12-13';
+
+
+mysql -u root
+use klinik

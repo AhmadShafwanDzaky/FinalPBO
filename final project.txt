@@ -1,0 +1,13 @@
+aplikasi menghitung luas bangun datar dan bisa dimodifikasi yang penting mencakup semua materi OOP.
+lingkaran
+segitiga
+...
+
+disimpan dalam file hasilnya
+lingakaran.txt
+segitiga.txt
+...
+
+penilaian :
+1. seberapa banyak materi yang diimplementasikan
+2. cara menjelaskan
